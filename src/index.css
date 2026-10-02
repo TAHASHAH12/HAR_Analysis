@@ -1,0 +1,45 @@
+/* WLDM brand tokens (WLDM Brand Replication Brief, 3 September 2026, sections 2, 3 and 6). */
+@font-face { font-family: 'TT Lakes Neue'; src: url(./fonts/TT_Lakes_Neue_Regular.woff2) format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'TT Lakes Neue'; src: url(./fonts/TT_Lakes_Neue_Italic.woff2) format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'TT Lakes Neue Head'; src: url(./fonts/TT_Lakes_Neue_Condensed_DemiBold.woff2) format('woff2'); font-weight: 600; font-display: swap; }
+
+:root {
+  color-scheme: light;
+  --bg: #EEEADE;
+  --surface: #F6F4EC;
+  --ink: #2A2B29;
+  --ny: #E1FF01;
+  --bl: #B8D3D8;
+  --tp: #BFC0B6;
+  --line: #D9D4C5;
+  --muted: #6E6E66;
+  --ink-soft: #55564F;
+  --ink-mute: #7A7B72;
+  --refdom: #5E8C97;
+  --good: #5E7D4F;
+  --head-tint: #EFECE2;
+  /* brief 2.4: AI platform series colours */
+  --chatgpt: #C05A2E;
+  --aimode: #6E7C1E;
+  --warn: #C24E1E;
+  --serif: 'TT Lakes Neue', 'Roboto', system-ui, sans-serif;
+  --head: 'TT Lakes Neue Head', 'TT Lakes Neue', Roboto, sans-serif;
+  --sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Roboto Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media print {
+  body { background: #EEEADE; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
