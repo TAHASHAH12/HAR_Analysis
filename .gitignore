@@ -22,6 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# data.json holds client data; rebuild it with `npm run data`
-public/data.json
