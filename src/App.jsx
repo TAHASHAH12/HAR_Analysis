@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import { Bars, Select, Tile } from './ui.jsx'
+import { PLATFORMS, countBy, uniq } from './util.js'
+import { Clusters, Findings, Prompts, ShareOfVoice, Sources } from './Analysis.jsx'
 import logoSvg from './assets/wldm-h-black.svg?raw'
 
 // Official lockup, inlined as the brand brief requires (never retyped or linked as an image).
 const LOGO = logoSvg.replace(/<\?xml[^>]*\?>\s*/, '').replace('<svg ', '<svg role="img" aria-label="WLDM" ')
 
-const TABS = ['Overview', 'Citations', 'Opportunities', 'HAR findings']
-const PLATFORMS = ['ChatGPT', 'Google AI Mode']
-const SERIES_CLASS = { ChatGPT: 'series-chatgpt', 'Google AI Mode': 'series-aimode' }
+const TABS = ['Findings', 'Clusters', 'Share of voice', 'Sources', 'Prompts', 'Captures', 'Profound overview', 'Profound citations', 'Opportunities']
+const PROFOUND_TABS = ['Profound overview', 'Profound citations', 'Opportunities']
+const slug = (t) => t.replaceAll(' ', '-').toLowerCase()
 const TREND_ORDER = ['rising', 'stable', 'declining', 'lapsed', 'dead']
 const STATUS_LABEL = {
   retrieved_and_cited: 'Retrieved and cited',
@@ -18,80 +21,6 @@ const STATUS_LABEL = {
   cited: 'Cited',
   linked_in_answer: 'Linked in answer',
   not_seen: 'Not seen',
-}
-
-const uniq = (items) => [...new Set(items)]
-const countBy = (items, key) => {
-  const counts = new Map()
-  for (const item of items) counts.set(key(item), (counts.get(key(item)) || 0) + 1)
-  return counts
-}
-
-function Tile({ label, value, note }) {
-  return (
-    <div className="tile">
-      <div className="tile-label">{label}</div>
-      <div className="tile-value">{value}</div>
-      {note && <div className="tile-note">{note}</div>}
-    </div>
-  )
-}
-
-// Horizontal bars. `segments` is [{ key, value }] per row; one segment = plain bar.
-function Bars({ rows, max, legend, caption }) {
-  const top = max ?? Math.max(1, ...rows.map((r) => r.segments.reduce((s, x) => s + x.value, 0)))
-  return (
-    <figure className="bars">
-      {legend && (
-        <div className="legend">
-          {legend.map((name, i) => (
-            <span key={name}>
-              <i className={`swatch ${SERIES_CLASS[name] || `series-${i + 1}`}`} />
-              {name}
-            </span>
-          ))}
-        </div>
-      )}
-      {rows.map((row) => {
-        const total = row.segments.reduce((s, x) => s + x.value, 0)
-        return (
-          <div className="bar-row" key={row.label}>
-            <div className="bar-label" title={row.label}>{row.label}</div>
-            <div className="bar-track">
-              {row.segments.map(
-                (seg, i) =>
-                  seg.value > 0 && (
-                    <div
-                      key={seg.key}
-                      className={`bar ${legend ? SERIES_CLASS[seg.key] || `series-${i + 1}` : 'series-ink'}`}
-                      style={{ width: `${(seg.value / top) * 100}%` }}
-                      tabIndex={0}
-                      data-tip={`${seg.key}: ${seg.value}`}
-                    />
-                  ),
-              )}
-              <span className="bar-value">{total}</span>
-            </div>
-          </div>
-        )
-      })}
-      {caption && <figcaption>{caption}</figcaption>}
-    </figure>
-  )
-}
-
-function Select({ label, value, options, onChange }) {
-  return (
-    <label className="select">
-      <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">All</option>
-        {options.map((o) => (
-          <option key={o} value={o}>{o}</option>
-        ))}
-      </select>
-    </label>
-  )
 }
 
 function Overview({ rows }) {
@@ -269,6 +198,7 @@ function Opportunities({ rows }) {
 }
 
 function HarFindings({ har }) {
+  const [selected, setSelected] = useState('')
   const turns = useMemo(() => {
     const map = new Map()
     const turn = (r) => {
@@ -297,14 +227,15 @@ function HarFindings({ har }) {
     )
   }
 
+  const current = selected || turns[0].har
   const isCited = (u) => ['cited', 'retrieved_and_cited', 'cited_not_in_results'].includes(u.status)
   const allUrls = turns.flatMap((t) => t.urls)
   const summary = (
     <section className="card">
       <h2>All captures ({turns.length})</h2>
       <p className="note">
-        One row per recorded answer. "Websites searched" is the count the tool reports. Where it is higher than the
-        pages cited, the difference is pages that were retrieved and dropped.
+        One row per recorded answer. Select a row to see its sources below. "Websites searched" is the count the
+        tool reports. Where it is higher than the pages cited, the difference is pages that were retrieved and dropped.
       </p>
       <div className="tiles">
         <Tile label="Captures" value={turns.length} note={`${uniq(turns.map((t) => t.prompt)).length} prompts`} />
@@ -322,7 +253,7 @@ function HarFindings({ har }) {
           </thead>
           <tbody>
             {turns.map((t) => (
-              <tr key={t.har}>
+              <tr key={t.har} className={t.har === current ? 'highlight' : ''} onClick={() => setSelected(t.har)} style={{ cursor: 'pointer' }}>
                 <td>{t.prompt}</td>
                 <td>{t.platform}</td>
                 <td className="mono">{t.har.replace('.har', '')}</td>
@@ -338,7 +269,7 @@ function HarFindings({ har }) {
     </section>
   )
 
-  const cards = turns.map((t) => {
+  const cards = turns.filter((t) => t.har === current).map((t) => {
     const statusCounts = [...countBy(t.urls, (u) => u.status)].sort((a, b) => b[1] - a[1])
     const stake = t.urls.filter((u) => u.stake_owned === 'yes')
     return (
@@ -419,10 +350,10 @@ export default function App() {
   const [error, setError] = useState('')
   // The tab lives in the URL hash so a view can be linked or reloaded.
   const [tab, setTabState] = useState(
-    () => TABS.find((t) => t.replace(' ', '-').toLowerCase() === window.location.hash.slice(1)) || TABS[0],
+    () => TABS.find((t) => slug(t) === window.location.hash.slice(1)) || TABS[0],
   )
   const setTab = (t) => {
-    window.history.replaceState(null, '', `#${t.replace(' ', '-').toLowerCase()}`)
+    window.history.replaceState(null, '', `#${slug(t)}`)
     setTabState(t)
   }
   const [country, setCountry] = useState('')
@@ -445,7 +376,8 @@ export default function App() {
   const rows = all.filter(
     (r) => (!country || r.country === country) && (!platform || r.platform === platform) && (!prompt || r.prompt === prompt),
   )
-  const showFilters = tab !== 'HAR findings'
+  const showFilters = PROFOUND_TABS.includes(tab)
+  const a = data.analysis
 
   return (
     <main className="app">
@@ -458,7 +390,7 @@ export default function App() {
           </div>
           <h1>What AI search <em>cites</em> for Stake</h1>
           <p className="note">
-            Profound export {data.profoundFile} · {data.har.urls.length} HAR page records · data built {data.generated.replace('T', ' ')}
+            {a ? `${a.captures} captures · ${a.prompts} prompts · ` : ''}{data.har.urls.length} source records · Profound export {data.profoundFile} · built {data.generated.replace('T', ' ')}
           </p>
         </div>
         <nav>
@@ -475,10 +407,16 @@ export default function App() {
         </div>
       )}
       {showFilters && rows.length === 0 && <p className="note">No citations match these filters.</p>}
-      {tab === 'Overview' && rows.length > 0 && <Overview rows={rows} />}
-      {tab === 'Citations' && rows.length > 0 && <Citations rows={rows} />}
+      {!a && !showFilters && tab !== 'Captures' && <p className="note">No analysis yet. Run <code>npm run extract</code>.</p>}
+      {a && tab === 'Findings' && <Findings a={a} />}
+      {a && tab === 'Clusters' && <Clusters a={a} />}
+      {a && tab === 'Share of voice' && <ShareOfVoice a={a} />}
+      {a && tab === 'Sources' && <Sources a={a} />}
+      {a && tab === 'Prompts' && <Prompts a={a} />}
+      {tab === 'Captures' && <HarFindings har={data.har} />}
+      {tab === 'Profound overview' && rows.length > 0 && <Overview rows={rows} />}
+      {tab === 'Profound citations' && rows.length > 0 && <Citations rows={rows} />}
       {tab === 'Opportunities' && rows.length > 0 && <Opportunities rows={rows} />}
-      {tab === 'HAR findings' && <HarFindings har={data.har} />}
     </main>
   )
 }

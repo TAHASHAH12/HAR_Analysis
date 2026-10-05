@@ -92,7 +92,7 @@ figcaption { font-size: 13px; line-height: 1.5; color: var(--ink-mute); margin-t
 .bar-track { display: flex; align-items: center; gap: 2px; height: 13px; background: rgba(184, 211, 216, 0.42); margin-right: 38px; position: relative; }
 .bar { height: 100%; min-width: 2px; position: relative; }
 .bar:last-of-type { border-radius: 0 6px 6px 0; }
-.bar-value { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.bar-value { white-space: nowrap; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-left: 6px; font-variant-numeric: tabular-nums; }
 .series-ink { background: var(--ink); }
 .series-ink:hover { background: #068D72; }
 .series-chatgpt, .series-1 { background: var(--chatgpt); }
@@ -144,3 +144,15 @@ tr.highlight td { background: rgba(225, 255, 1, 0.14); }
   .card, .tile { break-inside: avoid; }
   .table-wrap { max-height: none; overflow: visible; }
 }
+
+/* Source types: brief 2.4 categorical palette, ink for Stake's own pages. */
+.type-stake { background: var(--ink); }
+.type-operator { background: #C24E1E; }
+.type-affiliate { background: #C79320; }
+.type-news { background: #3E74C2; }
+.type-regulator { background: #068D72; }
+.type-community { background: #A9427E; }
+.type-reference { background: #77801F; }
+.type-other { background: #8F8D84; }
+.u-lm { background: linear-gradient(transparent 62%, var(--ny) 62%); padding: 0 0.05em; color: var(--ink); }
+.card .filters { margin-bottom: 12px; }
